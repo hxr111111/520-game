@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>电子斗蛐蛐</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+:root{
+  --bg:#0d0d1a;--card:#161628;--card2:#1e1e35;
+  --accent:#ffd700;--green:#4ade80;--red:#f87171;
+  --yellow:#fbbf24;--blue:#60a5fa;--purple:#c084fc;--orange:#fb923c;
+  --text:#f0f0f0;--dim:#888;--border:rgba(255,255,255,.08);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+  font-family:'PingFang SC','微软雅黑',system-ui,sans-serif;color:var(--text);}
+
+/* ── Screens ── */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;
+  transition:opacity .25s,transform .25s;overflow:hidden;}
+.screen.off{opacity:0;pointer-events:none;transform:scale(.97);}
+
+/* ── Buttons ── */
+.btn{padding:13px 20px;border:none;border-radius:12px;font-size:.95rem;
+  font-weight:700;cursor:pointer;letter-spacing:1px;transition:transform .12s,filter .12s;
+  font-family:inherit;}
+.btn:active{transform:scale(.94);}
+.btn-gold{background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a0800;
+  box-shadow:0 4px 18px #ffd70038;}
+.btn-blue{background:linear-gradient(135deg,#4ecdc4,#2980b9);color:#fff;
+  box-shadow:0 4px 18px #4ecdc438;}
+.btn-green{background:linear-gradient(135deg,#4ade80,#16a34a);color:#0a1a0a;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--dim);}
+.btn-red{background:linear-gradient(135deg,#f87171,#dc2626);color:#fff;}
+
+/* ━━━━ TITLE ━━━━ */
+#s-title{align-items:center;justify-content:center;gap:28px;
+  background:radial-gradient(ellipse at 50% 30%,#2a1a3e 0%,#0d0d1a 65%);
+  padding:24px 24px max(env(safe-area-inset-bottom),24px);}
+.logo{text-align:center;}
+.logo-emoji{font-size:5rem;display:block;animation:float 3s ease-in-out infinite;
+  filter:drop-shadow(0 0 18px #ffd70088);}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.logo-name{font-size:2rem;font-weight:900;color:var(--accent);letter-spacing:6px;
+  text-shadow:0 0 24px #ffd70066;margin-top:8px;}
+.logo-tag{font-size:.78rem;color:var(--dim);letter-spacing:3px;margin-top:4px;}
+.mode-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:300px;}
+.tip{font-size:.75rem;color:var(--dim);text-align:center;line-height:1.8;max-width:280px;}
+
+/* ━━━━ SETUP ━━━━ */
+#s-setup{align-items:center;justify-content:center;gap:0;
+  background:radial-gradient(ellipse at 50% 30%,#1a1a3e 0%,#0d0d1a 65%);
+  padding:24px;}
+.setup-card{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:16px;}
+.setup-title{font-size:1.05rem;font-weight:700;text-align:center;color:var(--accent);}
+.field label{font-size:.78rem;color:var(--dim);display:block;margin-bottom:5px;}
+input[type=text]{width:100%;padding:11px 14px;background:var(--card2);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);
+  font-size:.95rem;font-family:inherit;outline:none;transition:border-color .2s;}
+input[type=text]:focus{border-color:var(--accent);}
+input[type=text]::placeholder{color:var(--dim);}
+
+/* ━━━━ BATTLE ━━━━ */
+#s-battle{padding-top:max(env(safe-area-inset-top),0px);
+  padding-bottom:max(env(safe-area-inset-bottom),0px);}
+
+/* Round bar */
+.round-bar{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);
+  flex-shrink:0;}
+.round-label{font-size:.82rem;font-weight:700;color:var(--dim);}
+.score-display{font-size:.82rem;font-weight:700;color:var(--text);}
+.score-display span{color:var(--accent);}
+.round-dots{display:flex;gap:6px;align-items:center;}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--card2);
+  border:1px solid var(--border);transition:all .3s;}
+.dot.done{background:var(--accent);border-color:var(--accent);box-shadow:0 0 7px var(--accent);}
+.dot.active{background:var(--orange);border-color:var(--orange);animation:dpulse 1s infinite;}
+@keyframes dpulse{0%,100%{box-shadow:0 0 0 0 #fb923c66}50%{box-shadow:0 0 0 5px transparent}}
+
+/* Fighter cards */
+.fighters{display:flex;flex-direction:column;gap:6px;padding:10px 12px;flex-shrink:0;}
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:10px 12px;display:flex;gap:10px;align-items:center;
+  transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden;}
+.fcard.enemy{flex-direction:row-reverse;}
+.fcard.enemy .finfo{align-items:flex-end;}
+.fsprite{font-size:2.6rem;flex-shrink:0;transition:transform .15s;position:relative;z-index:1;}
+.fcard.enemy .fsprite{transform:scaleX(-1);}
+.fcard.enemy .fsprite.lunge{transform:scaleX(-1) translateX(20px);}
+.fcard:not(.enemy) .fsprite.lunge{transform:translateX(-20px);}
+.finfo{display:flex;flex-direction:column;gap:5px;flex:1;}
+.fname{font-size:.88rem;font-weight:700;letter-spacing:1px;}
+.hp-row{display:flex;align-items:center;gap:8px;width:100%;}
+.hp-wrap{flex:1;height:7px;background:var(--card2);border-radius:4px;overflow:hidden;}
+.hp-bar{height:100%;border-radius:4px;transition:width .5s ease,background .4s;}
+.hp-txt{font-size:.72rem;color:var(--dim);min-width:48px;white-space:nowrap;text-align:right;}
+.fcard.enemy .hp-txt{text-align:left;}
+.chips{display:flex;gap:3px;flex-wrap:wrap;min-height:16px;}
+.chip{font-size:.62rem;padding:2px 5px;border-radius:5px;font-weight:700;white-space:nowrap;}
+.c-atk{background:#f871711a;color:var(--red);border:1px solid #f8717130;}
+.c-def{background:#4ade801a;color:var(--green);border:1px solid #4ade8030;}
+.c-spd{background:#ffd7001a;color:var(--accent);border:1px solid #ffd70030;}
+.c-heal{background:#c084fc1a;color:var(--purple);border:1px solid #c084fc30;}
+
+/* VS divider */
+.vs-divider{text-align:center;font-size:.7rem;color:var(--border);
+  letter-spacing:2px;padding:0 12px;flex-shrink:0;}
+
+/* Log */
+.log{flex:1;overflow-y:auto;padding:8px 12px;
+  background:var(--card);border-top:1px solid var(--border);min-height:80px;}
+.log::-webkit-scrollbar{width:3px;}
+.log::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.le{font-size:.76rem;line-height:1.65;padding:1px 0;}
+.le+.le{border-top:1px solid #ffffff06;}
+.le.info{color:var(--dim);}
+.le.hit{color:var(--red);}
+.le.buff{color:var(--green);}
+.le.crit{color:var(--orange);font-weight:700;}
+.le.win{color:var(--accent);font-weight:700;}
+.le.system{color:var(--dim);font-style:italic;}
+
+/* Input phase */
+.input-phase{flex-shrink:0;padding:10px 12px 10px;
+  background:var(--card);border-top:1px solid var(--border);
+  display:none;flex-direction:column;gap:8px;}
+.input-who{font-size:.8rem;color:var(--dim);}
+.input-who b{color:var(--accent);}
+textarea{width:100%;min-height:54px;max-height:90px;resize:none;
+  background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:.9rem;padding:9px 12px;font-family:inherit;
+  outline:none;transition:border-color .2s;line-height:1.5;}
+textarea:focus{border-color:var(--accent);}
+textarea::placeholder{color:var(--dim);}
+.input-btns{display:flex;gap:8px;}
+.input-btns .btn{flex:1;padding:10px;font-size:.85rem;}
+
+/* ━━━━ PASS ━━━━ */
+#s-pass{align-items:center;justify-content:center;gap:0;
+  background:#000000cc;padding:24px;}
+.pass-card{background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:32px 24px;text-align:center;max-width:300px;width:100%;}
+.pass-icon{font-size:3.5rem;margin-bottom:12px;}
+.pass-title{font-size:1.15rem;font-weight:700;margin-bottom:8px;}
+.pass-sub{font-size:.82rem;color:var(--dim);line-height:1.7;margin-bottom:20px;}
+
+/* ━━━━ RESULT ━━━━ */
+#s-result{align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 30%,#2a1a3e 0%,#0d0d1a 65%);padding:24px;}
+.result-card{background:var(--card);border:1px solid var(--border);
+  border-radius:24px;padding:32px 24px;text-align:center;max-width:320px;width:100%;}
+.result-icon{font-size:4.5rem;display:block;margin-bottom:12px;
+  animation:rpop .5s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes rpop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.result-title{font-size:1.5rem;font-weight:900;margin-bottom:8px;}
+.result-sub{font-size:.85rem;color:var(--dim);line-height:1.8;
+  white-space:pre-line;margin-bottom:22px;}
+.result-btns{display:flex;flex-direction:column;gap:10px;}
+
+/* ━━━━ Damage float ━━━━ */
+.fdmg{position:fixed;font-size:1.35rem;font-weight:900;pointer-events:none;
+  z-index:300;animation:fup .85s ease-out forwards;text-shadow:0 2px 6px #0008;}
+@keyframes fup{0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-55px) scale(.8)}}
+
+/* ━━━━ Shake ━━━━ */
+@keyframes shake{0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-7px)}40%{transform:translateX(7px)}
+  60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .38s ease;}
+
+/* ━━━━ Phase flash overlay ━━━━ */
+.phase-flash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  z-index:200;pointer-events:none;opacity:0;transition:opacity .2s;}
+.phase-flash.show{opacity:1;}
+.phase-flash-text{font-size:2rem;font-weight:900;color:#fff;
+  text-shadow:0 0 30px #fff8,0 4px 16px #0008;letter-spacing:6px;}
+</style>
+</head>
+<body>
+
+<!-- ━━━━ TITLE ━━━━ -->
+<div id="s-title" class="screen">
+  <div class="logo">
+    <span class="logo-emoji">🦗</span>
+    <div class="logo-name">电子斗蛐蛐</div>
+    <div class="logo-tag">以词为刃 · 以智取胜</div>
+  </div>
+  <div class="mode-btns">
+    <button class="btn btn-gold" onclick="selectMode('pve')">⚔️ &nbsp;人机对战</button>
+    <button class="btn btn-blue" onclick="selectMode('pvp')">👥 &nbsp;双人对战</button>
+  </div>
+  <p class="tip">
+    输入提示词来强化你的蛐蛐<br>
+    词越精妙，战力越强<br>
+    三局两胜，定夺胜负
+  </p>
+</div>
+
+<!-- ━━━━ SETUP ━━━━ -->
+<div id="s-setup" class="screen off">
+  <div class="setup-card">
+    <div class="setup-title" id="setup-title">🦗 为你的蛐蛐命名</div>
+    <div class="field">
+      <label id="p1-label">你的蛐蛐名</label>
+      <input type="text" id="in-p1" placeholder="例：天下第一蛐" maxlength="8">
+    </div>
+    <div class="field" id="p2-field" style="display:none">
+      <label>玩家2 蛐蛐名</label>
+      <input type="text" id="in-p2" placeholder="例：无敌霸王蛐" maxlength="8">
+    </div>
+    <button class="btn btn-gold" onclick="startGame()">🚀 &nbsp;开始战斗</button>
+    <button class="btn btn-ghost" onclick="show('s-title')">返回</button>
+  </div>
+</div>
+
+<!-- ━━━━ BATTLE ━━━━ -->
+<div id="s-battle" class="screen off">
+  <div class="round-bar">
+    <span class="round-label" id="round-label">第 1 回合</span>
+    <div class="round-dots">
+      <div class="dot active" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+    </div>
+    <span class="score-display">你 <span id="score-p">0</span> - <span id="score-e">0</span> 对手</span>
+  </div>
+
+  <div class="fighters">
+    <!-- Enemy -->
+    <div class="fcard enemy" id="fc-enemy">
+      <div class="fsprite" id="sp-enemy">🦗</div>
+      <div class="finfo">
+        <div class="fname" id="nm-enemy">对手</div>
+        <div class="hp-row">
+          <div class="hp-txt" id="ht-enemy">100/100</div>
+          <div class="hp-wrap"><div class="hp-bar" id="hb-enemy" style="width:100%;background:#4ade80"></div></div>
+        </div>
+        <div class="chips" id="ch-enemy"></div>
+      </div>
+    </div>
+
+    <div class="vs-divider">— VS —</div>
+
+    <!-- Player -->
+    <div class="fcard" id="fc-player">
+      <div class="fsprite" id="sp-player">🦗</div>
+      <div class="finfo">
+        <div class="fname" id="nm-player">玩家</div>
+        <div class="hp-row">
+          <div class="hp-wrap"><div class="hp-bar" id="hb-player" style="width:100%;background:#4ade80"></div></div>
+          <div class="hp-txt" id="ht-player">100/100</div>
+        </div>
+        <div class="chips" id="ch-player"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <div class="input-phase" id="input-phase">
+    <div class="input-who" id="input-who">输入提示词强化 <b id="who-name">你的蛐蛐</b>：</div>
+    <textarea id="ta" placeholder="例：我的蛐蛐铁甲无敌，速度如风，必杀一击！" maxlength="80" rows="2"></textarea>
+    <div class="input-btns">
+      <button class="btn btn-ghost" onclick="randPrompt()">🎲 随机词</button>
+      <button class="btn btn-green" onclick="submitPrompt()">⚡ 出战</button>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━ PASS ━━━━ -->
+<div id="s-pass" class="screen off">
+  <div class="pass-card">
+    <div class="pass-icon">🔄</div>
+    <div class="pass-title" id="pass-title">请传给玩家2</div>
+    <div class="pass-sub" id="pass-sub">遮住屏幕后传给对方<br>不要让对方看到你的提示词</div>
+    <button class="btn btn-gold" onclick="continuePass()">已接过手机，继续 ▶</button>
+  </div>
+</div>
+
+<!-- ━━━━ RESULT ━━━━ -->
+<div id="s-result" class="screen off">
+  <div class="result-card">
+    <span class="result-icon" id="r-icon">🏆</span>
+    <div class="result-title" id="r-title">胜利！</div>
+    <div class="result-sub" id="r-sub"></div>
+    <div class="result-btns">
+      <button class="btn btn-gold" onclick="rematch()">🔁 &nbsp;再来一局</button>
+      <button class="btn btn-ghost" onclick="show('s-title')">🏠 &nbsp;返回主页</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phase flash -->
+<div class="phase-flash" id="pf"><div class="phase-flash-text" id="pf-text"></div></div>
+
+<script>
+'use strict';
+
+// ── Keyword rules ──────────────────────────────────────
+const RULES = [
+  // Special combos (checked first)
+  {re:/无敌|战神|天下第一|究极形态|绝对领域/g,      label:'无敌光环',  bonus:{atk:8,def:6,spd:4},          desc:'全属性大幅提升'},
+  {re:/必杀|绝杀|一击毙命|秒杀|终结技/g,            label:'必杀之刃',  bonus:{atk:22},selfHurt:18,          desc:'攻击暴涨但反噬自身18HP'},
+  {re:/霸王|霸体|无法阻挡|王者/g,                   label:'霸王之势',  bonus:{atk:10,def:8},                 desc:'攻守两端全面提升'},
+  {re:/暴走|狂暴|血怒|怒气爆发|暴力形态/g,          label:'暴走形态',  bonus:{atk:14,spd:6},selfHurt:10,     desc:'攻速暴涨但损耗10HP'},
+  {re:/回血|治愈|满血复活|恢复生命|疗愈|再生/g,     label:'生命涌动',  bonus:{heal:22},                      desc:'回复22点生命'},
+  {re:/隐身|幽灵|虚无缥缈|神出鬼没/g,               label:'鬼影步',    bonus:{spd:12,def:4},                 desc:'速度与防御大幅提升'},
+  // Stat keywords (stacks up to limit)
+  {re:/[猛狠力破斩刺击爆冲怒撕咬锋利穿透]/g,       type:'atk', bonus:{atk:4}, limit:3},
+  {re:/[守防护盾铁坚壁挡硬钢固若]/g,               type:'def', bonus:{def:4}, limit:3},
+  {re:/[快疾迅风闪速飞急灵矫捷]/g,                 type:'spd', bonus:{spd:3}, limit:3},
+];
+
+const AI_DECKS = {
+  攻击型: ['猛攻猛打，力劈华山，斩铁如泥！','爆发极限，冲破一切，暴走形态！','狠辣必杀！斩！','怒气爆发，全力一击！'],
+  防御型: ['铁甲护体，坚不可摧，守如磐石','铁壁防御，滴水不漏，固若金汤','以守待攻，坚守阵地，护体护盾'],
+  均衡型: ['攻守兼备，疾如闪电，铁拳出击','稳扎稳打，铁甲快攻，无懈可击','风驰电掣，猛中有守，破甲利刃'],
+  奇策型: ['无敌蛐蛐天下第一，究极形态全开！','隐身鬼影步，神出鬼没，一击致胜！','满血复活，暴走怒气，霸王归来！'],
+};
+
+const RAND_POOL = [
+  '铁甲神蛐，速度如风，力大无穷！',
+  '疾如闪电，防如铁壁，攻击必中！',
+  '无敌蛐蛐，天下第一，一击制胜！',
+  '猛攻破防，快速突击，必杀绝技！',
+  '霸体护身，暴走怒气，一往无前！',
+  '回血满状态！再战无惧！',
+  '守中有攻，铁壁之后，迅猛出击！',
+  '隐身闪现，神出鬼没，一击致命！',
+];
+
+// ── State ──────────────────────────────────────────────
+let G = {};
+
+function makeUnit(name, isAI) {
+  return { name, hp:100, maxHp:100, baseAtk:15, baseDef:5, baseSpd:5,
+           atk:15, def:5, spd:5, isAI: !!isAI,
+           aiStyle: isAI ? rnd(['攻击型','防御型','均衡型','奇策型']) : null,
+           _hurt:0, _effects:[] };
+}
+
+function newGame(mode, p1n, p2n) {
+  G = {
+    mode,
+    round: 1,
+    phase: 'p1',   // 'p1' | 'pass' | 'p2' | 'fighting' | 'done'
+    wins: { p:0, e:0 },
+    p: makeUnit(p1n),
+    e: makeUnit(p2n, mode === 'pve'),
+  };
+}
+
+// ── Prompt parsing ─────────────────────────────────────
+function parsePrompt(txt) {
+  const r = { atk:0, def:0, spd:0, heal:0, selfHurt:0, effects:[] };
+  const used = new Set();
+
+  for (const rule of RULES) {
+    const re = new RegExp(rule.re.source, rule.re.flags);
+    const ms = txt.match(re);
+    if (!ms) continue;
+    const key = rule.label || rule.type;
+    if (used.has(key)) continue;
+    used.add(key);
+
+    const n = rule.limit ? Math.min(ms.length, rule.limit) : 1;
+    if (rule.bonus.atk)  r.atk  += rule.bonus.atk  * n;
+    if (rule.bonus.def)  r.def  += rule.bonus.def  * n;
+    if (rule.bonus.spd)  r.spd  += rule.bonus.spd  * n;
+    if (rule.bonus.heal) r.heal += rule.bonus.heal;
+    if (rule.selfHurt)   r.selfHurt += rule.selfHurt;
+
+    if (rule.label) {
+      r.effects.push(`${rule.label}(${rule.desc})`);
+    } else {
+      const lbl = {atk:`攻击+${rule.bonus.atk*n}`,def:`防御+${rule.bonus.def*n}`,spd:`速度+${rule.bonus.spd*n}`};
+      r.effects.push(lbl[rule.type]);
+    }
+  }
+
+  // Creativity bonus
+  if (txt.length > 14) {
+    const stats = ['atk','def','spd'];
+    const s = stats[Math.floor(Math.random()*3)];
+    const b = ~~(Math.random()*4)+2;
+    r[s] += b;
+    r.effects.push(`灵感爆发+${b}`);
+  }
+  if (/[！!]/.test(txt)) { r.atk += 3; r.effects.push('气势冲天+3攻'); }
+
+  return r;
+}
+
+function applyBuff(unit, txt) {
+  const b = parsePrompt(txt);
+  unit.atk = unit.baseAtk + b.atk;
+  unit.def = unit.baseDef + b.def;
+  unit.spd = unit.baseSpd + b.spd;
+  unit._hurt = b.selfHurt;
+  unit._effects = b.effects;
+  if (b.heal > 0) unit.hp = Math.min(unit.maxHp, unit.hp + b.heal);
+  return b;
+}
+
+// ── Combat ─────────────────────────────────────────────
+function calcDmg(atk, def) {
+  const base = Math.max(2, atk - def * 0.58 + (Math.random()*7 - 3.5));
+  const crit = Math.random() < 0.15;
+  return { dmg: Math.round(crit ? base * 1.65 : base), crit };
+}
+
+async function runRound() {
+  const {p, e} = G;
+  log('── 战斗开始 ──', 'info');
+
+  // Self-hurt from risky skills
+  if (p._hurt > 0) { p.hp = Math.max(1, p.hp - p._hurt); log(`⚡ ${p.name} 反噬 -${p._hurt}HP`, 'hit'); }
+  if (e._hurt > 0) { e.hp = Math.max(1, e.hp - e._hurt); log(`⚡ ${e.name} 反噬 -${e._hurt}HP`, 'hit'); }
+  renderUI(); await pause(350);
+
+  // Turn order
+  let [A, B, aid, bid] = p.spd >= e.spd && !(e.spd > p.spd) && Math.random() < .5 || p.spd > e.spd
+    ? [p, e, 'player', 'enemy']
+    : [e, p, 'enemy', 'player'];
+  if (e.spd > p.spd) [A, B, aid, bid] = [e, p, 'enemy', 'player'];
+  else if (p.spd > e.spd) [A, B, aid, bid] = [p, e, 'player', 'enemy'];
+  else { if (Math.random()<.5) [A,B,aid,bid]=[p,e,'player','enemy']; else [A,B,aid,bid]=[e,p,'enemy','player']; }
+
+  log(`💨 ${A.name} 速度更快，率先出手！`, 'info');
+  await pause(400);
+
+  // A attacks B
+  await animAtk(aid, bid);
+  const h1 = calcDmg(A.atk, B.def);
+  B.hp = Math.max(0, B.hp - h1.dmg);
+  log(`${h1.crit?'💥 暴击！':''}${A.name} 造成 ${h1.dmg} 点伤害！`, h1.crit?'crit':'hit');
+  floatDmg(h1.dmg, bid, h1.crit);
+  renderUI(); await pause(550);
+
+  if (B.hp <= 0) { log(`💀 ${B.name} 被击倒！`, 'win'); return; }
+
+  // B counter-attacks
+  await animAtk(bid, aid);
+  const h2 = calcDmg(B.atk, A.def);
+  A.hp = Math.max(0, A.hp - h2.dmg);
+  log(`${h2.crit?'💥 暴击！':''}${B.name} 反击造成 ${h2.dmg} 点伤害！`, h2.crit?'crit':'hit');
+  floatDmg(h2.dmg, aid, h2.crit);
+  renderUI(); await pause(400);
+}
+
+// ── Animations ────────────────────────────────────────
+async function animAtk(atkId, defId) {
+  const sp = $(`sp-${atkId}`);
+  sp.classList.add('lunge'); await pause(160);
+  sp.classList.remove('lunge');
+  const fc = $(`fc-${defId}`);
+  fc.classList.add('shake');
+  setTimeout(() => fc.classList.remove('shake'), 400);
+}
+
+function floatDmg(dmg, id, crit) {
+  const el = $(`fc-${id}`);
+  const r = el.getBoundingClientRect();
+  const d = document.createElement('div');
+  d.className = 'fdmg';
+  d.textContent = (crit ? '💥' : '-') + dmg;
+  d.style.cssText = `left:${r.left+r.width*.45}px;top:${r.top+r.height*.25}px;color:${crit?'#fb923c':'#f87171'}`;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 950);
+}
+
+async function flashMsg(txt) {
+  const pf = $('pf'), pt = $('pf-text');
+  pt.textContent = txt;
+  pf.classList.add('show'); await pause(700);
+  pf.classList.remove('show'); await pause(200);
+}
+
+// ── Render ────────────────────────────────────────────
+function renderUI() {
+  const {p, e, round, wins} = G;
+  $('nm-player').textContent = p.name;
+  $('nm-enemy').textContent  = e.name;
+  hpBar('player', p); hpBar('enemy', e);
+  chips('player', p); chips('enemy', e);
+  $('score-p').textContent = wins.p;
+  $('score-e').textContent = wins.e;
+  for (let i=1;i<=3;i++) {
+    const d = $('d'+i);
+    d.className = 'dot' + (i < round ? ' done' : i === round ? ' active' : '');
+  }
+  $('round-label').textContent = `第 ${round} 回合`;
+}
+
+function hpBar(id, u) {
+  const pct = Math.max(0, u.hp / u.maxHp * 100);
+  const bar = $('hb-'+id);
+  bar.style.width = pct + '%';
+  bar.style.background = pct>55 ? '#4ade80' : pct>28 ? '#fbbf24' : '#f87171';
+  $('ht-'+id).textContent = `${Math.max(0,u.hp)}/${u.maxHp}`;
+}
+
+function chips(id, u) {
+  const wrap = $('ch-'+id);
+  const base = 15, bdef = 5, bspd = 5;
+  let html = '';
+  if (u.atk !== base) html += `<span class="chip c-atk">攻${u.atk>base?'+':''}${u.atk-base}</span>`;
+  if (u.def !== bdef)  html += `<span class="chip c-def">防${u.def>bdef?'+':''}${u.def-bdef}</span>`;
+  if (u.spd !== bspd)  html += `<span class="chip c-spd">速${u.spd>bspd?'+':''}${u.spd-bspd}</span>`;
+  wrap.innerHTML = html;
+}
+
+function log(txt, cls='info') {
+  const a = $('log'), e = document.createElement('div');
+  e.className = 'le ' + cls;
+  e.textContent = txt;
+  a.appendChild(e);
+  a.scrollTop = a.scrollHeight;
+}
+
+function clearLog() { $('log').innerHTML = ''; }
+
+// ── Screen flow ───────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('off'));
+  $(id).classList.remove('off');
+}
+
+function selectMode(mode) {
+  G._mode = mode;
+  $('p1-label').textContent = mode === 'pvp' ? '玩家1 蛐蛐名' : '你的蛐蛐名';
+  $('p2-field').style.display = mode === 'pvp' ? 'block' : 'none';
+  $('setup-title').textContent = mode === 'pvp' ? '👥 为两只蛐蛐命名' : '🦗 为你的蛐蛐命名';
+  $('in-p1').value = ''; $('in-p2').value = '';
+  show('s-setup');
+}
+
+function startGame() {
+  const mode = G._mode;
+  const p1n = $('in-p1').value.trim() || rnd(['闪电虎','疾风侠','铁拳王','天下蛐']);
+  const p2n = mode === 'pvp'
+    ? ($('in-p2').value.trim() || rnd(['霸天虫','血爪魔','战神蛐','无敌蛐']))
+    : rnd(['黑旋风','铁甲兽','幽冥蛐','金刚蛐','霸天王']);
+  newGame(mode, p1n, p2n);
+  clearLog();
+  log(`⚔️ 对战开始！${G.p.name} vs ${G.e.name}`, 'win');
+  log('输入提示词来强化你的蛐蛐，词越精妙战力越强！', 'system');
+  show('s-battle');
+  renderUI();
+  promptPhase('p1');
+}
+
+function promptPhase(who) {
+  G.phase = who;
+  const ip = $('input-phase');
+  ip.style.display = 'flex';
+  $('ta').value = '';
+  const name = who === 'p1' ? G.p.name : G.e.name;
+  $('who-name').textContent = name;
+  $('who-name').style.color = who === 'p1' ? '#4ade80' : '#f87171';
+  setTimeout(() => $('ta').focus(), 100);
+}
+
+function submitPrompt() {
+  const txt = $('ta').value.trim();
+  if (!txt) { log('⚠️ 请输入提示词再出战！', 'info'); return; }
+  $('input-phase').style.display = 'none';
+
+  if (G.phase === 'p1') {
+    const b = applyBuff(G.p, txt);
+    log(`✨ ${G.p.name}：${b.effects.length ? b.effects.join(' · ') : '平静以待'}`, 'buff');
+    renderUI();
+
+    if (G.mode === 'pvp') {
+      $('pass-title').textContent = `请传给「${G.e.name}」的玩家`;
+      $('pass-sub').textContent = '遮住屏幕后传给对方\n不要让对方看到你的词！';
+      show('s-pass');
+    } else {
+      // AI turn
+      const aiTxt = rnd(AI_DECKS[G.e.aiStyle]);
+      const eb = applyBuff(G.e, aiTxt);
+      log(`🤖 ${G.e.name}(AI)：${eb.effects.length ? eb.effects.join(' · ') : '蓄势待发'}`, 'buff');
+      renderUI();
+      setTimeout(fight, 700);
+    }
+
+  } else if (G.phase === 'p2') {
+    const b = applyBuff(G.e, txt);
+    log(`✨ ${G.e.name}：${b.effects.length ? b.effects.join(' · ') : '平静以待'}`, 'buff');
+    renderUI();
+    show('s-battle');
+    setTimeout(fight, 700);
+  }
+}
+
+function continuePass() {
+  show('s-battle');
+  promptPhase('p2');
+}
+
+async function fight() {
+  G.phase = 'fighting';
+  await flashMsg('⚔️ 战斗！');
+  await runRound();
+
+  const {p, e} = G;
+  let roundWin = null;
+
+  if (p.hp <= 0 && e.hp <= 0) {
+    log('🤝 双方同归于尽！本回合平局', 'win');
+  } else if (p.hp <= 0) {
+    G.wins.e++; roundWin = 'e';
+    log(`💀 ${p.name} 落败！${e.name} 赢得本回合`, 'hit');
+  } else if (e.hp <= 0) {
+    G.wins.p++; roundWin = 'p';
+    log(`🏆 ${p.name} 赢得本回合！`, 'win');
+  } else {
+    if (p.hp > e.hp) {
+      G.wins.p++; roundWin = 'p';
+      log(`📊 ${p.name} HP剩余更多(${p.hp} vs ${e.hp})，赢得本回合！`, 'win');
+    } else if (e.hp > p.hp) {
+      G.wins.e++; roundWin = 'e';
+      log(`📊 ${e.name} HP剩余更多(${e.hp} vs ${p.hp})，赢得本回合！`, 'hit');
+    } else {
+      log(`📊 HP完全相同，本回合平局！`, 'info');
+    }
+  }
+
+  renderUI();
+  log(`当前战绩: 你 ${G.wins.p} - ${G.wins.e} 对手`, 'system');
+
+  if (G.wins.p >= 2 || G.wins.e >= 2 || G.round >= 3) {
+    await pause(900);
+    endMatch(); return;
+  }
+
+  // Next round setup
+  G.round++;
+  p.hp = Math.min(p.maxHp, p.hp + 18);
+  e.hp = Math.min(e.maxHp, e.hp + 18);
+  p.atk=p.baseAtk; p.def=p.baseDef; p.spd=p.baseSpd;
+  e.atk=e.baseAtk; e.def=e.baseDef; e.spd=e.baseSpd;
+  renderUI();
+  log(`── 第 ${G.round} 回合开始，双方回复18HP ──`, 'buff');
+  await pause(600);
+  promptPhase('p1');
+}
+
+function endMatch() {
+  const {p, e, wins} = G;
+  let icon, title, sub;
+  if (wins.p > wins.e) {
+    icon='🏆'; title=`${p.name} 大获全胜！`;
+    sub=`你以精妙的提示词战胜了${e.name}！\n最终比分 ${wins.p} : ${wins.e}`;
+  } else if (wins.e > wins.p) {
+    icon='💀'; title=`${p.name} 惜败落幕`;
+    sub=`${e.name} 战术更胜一筹...\n最终比分 ${wins.p} : ${wins.e}\n再接再厉！`;
+  } else {
+    icon='🤝'; title='势均力敌，平局！';
+    sub=`双方实力相当，难分高下\n最终比分 ${wins.p} : ${wins.e}`;
+  }
+  $('r-icon').textContent = icon;
+  $('r-title').textContent = title;
+  $('r-sub').textContent   = sub;
+  show('s-result');
+}
+
+function rematch() {
+  const {mode} = G;
+  const pn = G.p.name, en = G.e.name;
+  newGame(mode, pn, mode === 'pvp' ? en : null);
+  clearLog();
+  log(`⚔️ 重新对战！${G.p.name} vs ${G.e.name}`, 'win');
+  log('输入提示词来强化你的蛐蛐！', 'system');
+  show('s-battle');
+  renderUI();
+  promptPhase('p1');
+}
+
+function randPrompt() {
+  $('ta').value = rnd(RAND_POOL);
+  $('ta').focus();
+}
+
+// ── Utils ──────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const pause = ms => new Promise(r => setTimeout(r, ms));
+const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
+</script>
+</body>
+</html>

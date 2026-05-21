@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>520 · 给雨</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
+
+  :root {
+    --cream: #fdf6ec;
+    --warm: #f5e6d3;
+    --rose: #e8a598;
+    --deep-rose: #c97b6e;
+    --ink: #5a3e35;
+    --gold: #d4a96a;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--cream);
+    font-family: 'Georgia', 'PingFang SC', 'STSong', '宋体', serif;
+    touch-action: none;
+  }
+
+  /* ── 开场 ── */
+  #intro {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 10;
+    background: var(--cream);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  #intro.fade-out { opacity: 0; transform: scale(1.04); pointer-events: none; }
+
+  .date-label {
+    font-size: 13px; letter-spacing: 4px;
+    color: var(--rose); text-transform: uppercase;
+    margin-bottom: 18px;
+    animation: floatUp .8s ease both;
+  }
+  .title-520 {
+    font-size: 72px; font-weight: bold;
+    color: var(--deep-rose);
+    line-height: 1;
+    animation: floatUp .8s .15s ease both;
+    text-shadow: 0 2px 16px rgba(201,123,110,.25);
+  }
+  .subtitle {
+    font-size: 15px; letter-spacing: 3px;
+    color: var(--ink); opacity: .7;
+    margin-top: 12px;
+    animation: floatUp .8s .28s ease both;
+  }
+  .rules {
+    margin-top: 60px;
+    padding: 0 40px;
+    text-align: center;
+    font-size: 14px; line-height: 1.9;
+    color: var(--ink); opacity: .75;
+    max-width: 320px;
+    animation: floatUp .8s .4s ease both;
+  }
+  .start-btn {
+    margin-top: 30px;
+    padding: 12px 36px;
+    background: var(--deep-rose);
+    color: white;
+    border: none; border-radius: 28px;
+    font-size: 15px; letter-spacing: 3px;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(201,123,110,.4);
+    animation: floatUp .8s .55s ease both, pulse 2.4s 2s infinite ease-in-out;
+    cursor: pointer;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  @keyframes floatUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+
+  /* ── 游戏页 ── */
+  #game-page {
+    position: fixed; inset: 0;
+    z-index: 8;
+    opacity: 0; pointer-events: none;
+    transition: opacity .6s ease;
+    background: linear-gradient(180deg, #fdf6ec 0%, #fae6d6 100%);
+    overflow: hidden;
+  }
+  #game-page.visible { opacity: 1; pointer-events: auto; }
+
+  #game-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 20px 24px 12px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .hud-title {
+    font-size: 13px; letter-spacing: 3px;
+    color: var(--deep-rose);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .progress-track {
+    height: 8px;
+    background: rgba(232,165,152,.2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rose), var(--deep-rose));
+    width: 0%;
+    transition: width .3s ease;
+    border-radius: 4px;
+  }
+  .progress-text {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink);
+    opacity: .7;
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  .hint-bottom {
+    position: absolute;
+    bottom: 18px; left: 0; right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink);
+    opacity: .5;
+    letter-spacing: 2px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* 完成提示 */
+  #win-overlay {
+    position: absolute; inset: 0;
+    background: rgba(253,246,236,.95);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 5;
+    opacity: 0; pointer-events: none;
+    transition: opacity .6s ease;
+  }
+  #win-overlay.show { opacity: 1; pointer-events: auto; }
+  .win-heart {
+    font-size: 80px;
+    color: var(--deep-rose);
+    animation: heartBeat 1s infinite ease-in-out;
+  }
+  @keyframes heartBeat { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+  .win-text {
+    margin-top: 24px;
+    font-size: 18px;
+    color: var(--deep-rose);
+    letter-spacing: 3px;
+  }
+  .win-sub {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ink);
+    opacity: .7;
+    letter-spacing: 2px;
+  }
+  .win-btn {
+    margin-top: 36px;
+    padding: 12px 30px;
+    background: var(--deep-rose);
+    color: white;
+    border: none; border-radius: 24px;
+    font-size: 14px; letter-spacing: 2px;
+    font-family: inherit;
+    box-shadow: 0 6px 18px rgba(201,123,110,.35);
+    cursor: pointer;
+  }
+
+  /* ── 信纸页 ── */
+  #letter-page {
+    position: fixed; inset: 0;
+    z-index: 20;
+    background: var(--cream);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    opacity: 0; pointer-events: none;
+    transform: translateY(30px);
+    transition: opacity .7s ease, transform .7s ease;
+    padding-bottom: 60px;
+    touch-action: pan-y;
+  }
+  #letter-page.visible { opacity: 1; pointer-events: auto; transform: none; }
+
+  #letter-hearts {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .paper {
+    max-width: 400px;
+    margin: 40px auto 0;
+    padding: 36px 32px 56px;
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 2px 24px rgba(0,0,0,.08), 0 0 0 1px rgba(212,169,106,.18);
+    position: relative;
+    z-index: 2;
+  }
+  .paper::before {
+    content: '';
+    position: absolute; left: 52px; top: 0; bottom: 0;
+    border-left: 1px solid rgba(212,169,106,.25);
+  }
+  .paper-lines {
+    position: absolute; inset: 0; border-radius: 2px;
+    background-image: repeating-linear-gradient(
+      transparent, transparent 31px,
+      rgba(212,169,106,.12) 31px, rgba(212,169,106,.12) 32px
+    );
+    background-position: 0 70px;
+    pointer-events: none;
+  }
+  .letter-header {
+    text-align: right;
+    font-size: 12px; color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+    position: relative; z-index: 1;
+  }
+  .letter-salutation {
+    font-size: 18px; color: var(--deep-rose);
+    margin-bottom: 20px;
+    position: relative; z-index: 1;
+  }
+  .letter-body {
+    font-size: 15px; line-height: 2;
+    color: var(--ink);
+    position: relative; z-index: 1;
+    white-space: pre-wrap;
+  }
+  .letter-body .highlight {
+    color: var(--deep-rose);
+    font-style: italic;
+  }
+  .letter-sign {
+    margin-top: 36px;
+    text-align: right;
+    font-size: 14px; color: var(--ink);
+    line-height: 2;
+    position: relative; z-index: 1;
+  }
+  .letter-sign .name { color: var(--deep-rose); font-size: 16px; }
+  .seal {
+    position: absolute;
+    bottom: 36px; left: 36px;
+    width: 52px; height: 52px;
+    border: 2px solid var(--deep-rose);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    color: var(--deep-rose);
+    opacity: .5;
+    transform: rotate(-15deg);
+    z-index: 1;
+  }
+  .heart-row {
+    text-align: center;
+    margin: 36px auto 0;
+    font-size: 20px;
+    letter-spacing: 8px;
+    color: var(--deep-rose);
+    position: relative; z-index: 2;
+    animation: heartBeat 1.4s infinite ease-in-out;
+  }
+
+  .replay-btn {
+    display: block;
+    margin: 32px auto 0;
+    padding: 8px 22px;
+    background: transparent;
+    border: 1px solid var(--rose);
+    color: var(--deep-rose);
+    border-radius: 20px;
+    font-size: 12px; letter-spacing: 2px;
+    font-family: inherit;
+    cursor: pointer;
+    position: relative; z-index: 2;
+  }
+</style>
+</head>
+<body>
+
+<!-- 开场 -->
+<div id="intro">
+  <div class="date-label">2026 · 05 · 20</div>
+  <div class="title-520">520</div>
+  <div class="subtitle">想 得 到 我 的 心 吗</div>
+  <div class="rules">
+    手指拖动篮子<br>
+    接住飘落的 20 颗爱心<br>
+    就能闯关成功！
+  </div>
+  <button class="start-btn" onclick="startGame()">开 始</button>
+</div>
+
+<!-- 游戏 -->
+<div id="game-page">
+  <canvas id="game-canvas"></canvas>
+  <div class="hud">
+    <div class="hud-title">接 住 我 的 心</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">0 / 20</div>
+  </div>
+  <div class="hint-bottom">手 指 拖 动 · 左 右 移 动</div>
+
+  <div id="win-overlay">
+    <div class="win-heart">♥</div>
+    <div class="win-text">你 抓 住 了 我 的 心</div>
+    <div class="win-sub">也 抓 住 了 我 这 个 人</div>
+    <button class="win-btn" onclick="showLetter()">拆 开 情 书</button>
+  </div>
+</div>
+
+<!-- 情书 -->
+<canvas id="letter-hearts"></canvas>
+<div id="letter-page">
+  <div class="paper">
+    <div class="paper-lines"></div>
+    <div class="letter-header">二〇二六年五月二十日</div>
+
+    <div class="letter-salutation">亲爱的雨，</div>
+
+    <div class="letter-body">今天是 520，
+我想正式地告诉你一件事——
+
+遇见你之前，
+我不知道原来下雨天可以这么好听。
+
+你刚刚接住的那些爱心，
+其实都是我们的故事——
+从河南到北京，
+西双版纳和大理走过的路，
+那碗米线、那盘排骨、
+你开车载我兜过的风，
+下雨天的环球，
+过山车上你尖叫又笑的样子，
+一起啃过的烤鸭，
+看过的第一炉香，
+还有你弹给我听的钢琴。
+
+每一颗，
+都是只有我们才懂的瞬间。
+
+<span class="highlight">喜欢你不需要理由，
+但如果非要说——
+大概是因为你就是你，
+刚好是我心里的那个人。</span>
+
+谢谢你愿意为了我的心
+拖着小篮子跑来跑去，
+其实你不用接，
+我的心，一直都在你那里。</div>
+
+    <div class="letter-sign">
+      <div>永远的</div>
+      <div class="name">你的他 ♥</div>
+    </div>
+
+    <div class="seal">♥</div>
+  </div>
+
+  <div class="heart-row">♥ ♥ ♥ ♥ ♥</div>
+  <button class="replay-btn" onclick="restart()">再 玩 一 次</button>
+</div>
+
+<script>
+// ─────── 通用工具 ───────
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+function heartPath(ctx, x, y, size) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size, size);
+  ctx.beginPath();
+  ctx.moveTo(0, -0.3);
+  ctx.bezierCurveTo(0.5, -0.9, 1.2, 0.1, 0, 0.8);
+  ctx.bezierCurveTo(-1.2, 0.1, -0.5, -0.9, 0, -0.3);
+  ctx.restore();
+}
+
+// ─────── 游戏 ───────
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+
+const TARGET = 20;
+const WORDS = ['咬你', '河南', '北京', '西双版纳', '大理', '米线', '排骨', '开车', '下雨', '环球', '过山车', '烤鸭', '第一炉香', '钢琴'];
+
+let basketX = 0;
+let score = 0;
+let hearts = [];     // 飘落爱心
+let particles = [];  // 接住时的粒子
+let pops = [];       // +1 飘字
+let spawnTimer = 0;
+let gameRunning = false;
+let won = false;
+
+function resetGame() {
+  basketX = W / 2;
+  score = 0;
+  hearts = [];
+  particles = [];
+  pops = [];
+  spawnTimer = 0;
+  spawnAccum = 0;
+  lastFrame = 0;
+  tick._prev = 0;
+  won = false;
+  updateHUD();
+  document.getElementById('win-overlay').classList.remove('show');
+}
+
+function updateHUD() {
+  const pct = Math.min(100, (score / TARGET) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${Math.min(score, TARGET)} / ${TARGET}`;
+}
+
+// 触控
+function onMove(clientX) {
+  basketX = Math.max(40, Math.min(W - 40, clientX));
+}
+canvas.addEventListener('touchstart', e => { e.preventDefault(); onMove(e.touches[0].clientX); }, {passive:false});
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX); }, {passive:false});
+canvas.addEventListener('mousemove',  e => onMove(e.clientX));
+canvas.addEventListener('mousedown',  e => onMove(e.clientX));
+
+// 生成爱心
+function spawnHeart() {
+  hearts.push({
+    x: 30 + Math.random() * (W - 60),
+    y: -40,
+    vy: 2.6 + Math.random() * 1.8,
+    vx: (Math.random() - 0.5) * 0.8,
+    size: 20 + Math.random() * 8,
+    rot: (Math.random() - 0.5) * 0.5,
+    rotV: (Math.random() - 0.5) * 0.02,
+    word: WORDS[Math.floor(Math.random() * WORDS.length)],
+    color: ['#e8a598', '#c97b6e', '#f0b8a8', '#d4806e'][Math.floor(Math.random() * 4)],
+    caught: false,
+  });
+}
+
+function explode(x, y, color) {
+  for (let i = 0; i < 14; i++) {
+    const a = (Math.PI * 2 * i) / 14 + Math.random() * 0.5;
+    const sp = 2 + Math.random() * 3;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 1,
+      size: 3 + Math.random() * 4,
+      life: 1,
+      color,
+    });
+  }
+  pops.push({ x, y: y - 10, life: 1 });
+}
+
+function drawBasket() {
+  const bw = 70, bh = 22;
+  const y = H - 60;
+  ctx.save();
+  // 提手 (小手心托心)
+  ctx.fillStyle = '#c97b6e';
+  heartPath(ctx, basketX, y - 12, 12);
+  ctx.fill();
+  // 篮子
+  ctx.fillStyle = '#d4a96a';
+  ctx.beginPath();
+  ctx.moveTo(basketX - bw/2, y);
+  ctx.lineTo(basketX + bw/2, y);
+  ctx.lineTo(basketX + bw/2 - 8, y + bh);
+  ctx.lineTo(basketX - bw/2 + 8, y + bh);
+  ctx.closePath();
+  ctx.fill();
+  // 编织纹
+  ctx.strokeStyle = 'rgba(90,62,53,.25)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(basketX - bw/2 + i*12, y);
+    ctx.lineTo(basketX - bw/2 + i*12 - 2, y + bh);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(basketX - bw/2 + 4, y + bh/2);
+  ctx.lineTo(basketX + bw/2 - 4, y + bh/2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+let lastFrame = 0;
+let spawnAccum = 0;
+function tick(now) {
+  if (!gameRunning) return;
+  if (!lastFrame) lastFrame = now;
+  // dt 归一到 60fps 的"帧单位"，1 表示经过了 16.67ms
+  const dt = Math.min(2.5, (now - lastFrame) / 16.67);
+  lastFrame = now;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // 生成 (基于时间，约每 420ms 一颗)
+  spawnAccum += (now - (tick._prev || now));
+  tick._prev = now;
+  if (spawnAccum > 420 && !won) {
+    spawnAccum = 0;
+    spawnHeart();
+  }
+
+  // 更新 & 绘制爱心
+  const basketY = H - 60;
+  for (let i = hearts.length - 1; i >= 0; i--) {
+    const h = hearts[i];
+    h.y += h.vy * dt;
+    h.x += h.vx * dt;
+    h.rot += h.rotV * dt;
+
+    // 接住判定
+    const dx = Math.abs(h.x - basketX);
+    if (!h.caught && h.y > basketY - 14 && h.y < basketY + 24 && dx < 42) {
+      h.caught = true;
+      score++;
+      explode(h.x, h.y, h.color);
+      updateHUD();
+      if (score >= TARGET && !won) {
+        won = true;
+        setTimeout(() => {
+          document.getElementById('win-overlay').classList.add('show');
+        }, 600);
+      }
+      hearts.splice(i, 1);
+      continue;
+    }
+
+    if (h.y > H + 40) {
+      hearts.splice(i, 1);
+      continue;
+    }
+
+    // 绘制
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.rotate(h.rot);
+    ctx.fillStyle = h.color;
+    heartPath(ctx, 0, 0, h.size);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
+    const fontSize = h.word.length >= 4 ? 7 : h.word.length === 3 ? 8.5 : 11;
+    ctx.font = `600 ${fontSize}px -apple-system, "PingFang SC", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(h.word, 0, 2);
+    ctx.restore();
+  }
+
+  // 粒子
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 0.18 * dt;
+    p.life -= 0.025 * dt;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life;
+    heartPath(ctx, p.x, p.y, p.size * p.life);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // +1 飘字
+  for (let i = pops.length - 1; i >= 0; i--) {
+    const p = pops[i];
+    p.y -= 1.4 * dt;
+    p.life -= 0.018 * dt;
+    if (p.life <= 0) { pops.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = '#c97b6e';
+    ctx.font = 'bold 18px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('+1 ♥', p.x, p.y);
+    ctx.globalAlpha = 1;
+  }
+
+  drawBasket();
+  requestAnimationFrame(tick);
+}
+
+// ─────── 信纸背景爱心 ───────
+const lcanvas = document.getElementById('letter-hearts');
+const lctx = lcanvas.getContext('2d');
+let LW = 0, LH = 0;
+function lresize() {
+  LW = window.innerWidth; LH = window.innerHeight;
+  lcanvas.width = LW * dpr;
+  lcanvas.height = LH * dpr;
+  lcanvas.style.width = LW + 'px';
+  lcanvas.style.height = LH + 'px';
+  lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+lresize();
+window.addEventListener('resize', lresize);
+
+const ambientHearts = Array.from({length: 18}, () => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight + window.innerHeight,
+  size: 6 + Math.random() * 10,
+  speed: 0.3 + Math.random() * 0.6,
+  opacity: 0.08 + Math.random() * 0.18,
+  drift: (Math.random() - 0.5) * 0.5,
+  wobble: Math.random() * Math.PI * 2,
+}));
+
+function ambientTick() {
+  lctx.clearRect(0, 0, LW, LH);
+  ambientHearts.forEach(h => {
+    h.y -= h.speed;
+    h.wobble += 0.02;
+    h.x += Math.sin(h.wobble) * 0.4 + h.drift;
+    if (h.y < -30) { h.y = LH + 20; h.x = Math.random() * LW; }
+    lctx.fillStyle = `rgba(201,123,110,${h.opacity})`;
+    heartPath(lctx, h.x, h.y, h.size);
+    lctx.fill();
+  });
+  requestAnimationFrame(ambientTick);
+}
+ambientTick();
+
+// ─────── 流程控制 ───────
+function startGame() {
+  document.getElementById('intro').classList.add('fade-out');
+  setTimeout(() => {
+    document.getElementById('game-page').classList.add('visible');
+    resize();
+    resetGame();
+    gameRunning = true;
+    requestAnimationFrame(tick);
+  }, 500);
+}
+
+function showLetter() {
+  gameRunning = false;
+  document.getElementById('game-page').style.opacity = '0';
+  document.getElementById('game-page').style.pointerEvents = 'none';
+  document.getElementById('letter-page').classList.add('visible');
+}
+
+function restart() {
+  document.getElementById('letter-page').classList.remove('visible');
+  document.getElementById('game-page').style.opacity = '1';
+  document.getElementById('game-page').style.pointerEvents = 'auto';
+  resetGame();
+  gameRunning = true;
+  requestAnimationFrame(tick);
+}
+</script>
+</body>
+</html>

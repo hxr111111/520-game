@@ -1,15 +1,22 @@
 name: Build Android APK
 
-# 触发方式：手动点按钮，或当游戏/配置文件改动并推送时自动构建
+# 通用打包工作流：可为仓库里任意游戏 HTML 生成 APK
+# 通过手动触发（网页按钮 / gh CLI / 分享脚本）并传入参数
 on:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-      - 'www/**'
-      - 'package.json'
-      - 'capacitor.config.json'
-      - '.github/workflows/build-apk.yml'
+    inputs:
+      game_file:
+        description: '游戏 HTML 文件路径（相对仓库根目录，如 斗蛐蛐.html）'
+        required: true
+        default: '小游戏.html'
+      app_name:
+        description: 'App 显示名称（手机桌面上的名字）'
+        required: true
+        default: '给雨'
+      app_id:
+        description: 'App 包名（反向域名，需唯一，如 com.hxr.douqu）'
+        required: true
+        default: 'com.hxr.yuyu520'
 
 jobs:
   build:
@@ -32,6 +39,20 @@ jobs:
       - name: 配置 Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: 准备资源与 Capacitor 配置
+        env:
+          GAME_FILE: ${{ github.event.inputs.game_file }}
+          APP_NAME: ${{ github.event.inputs.app_name }}
+          APP_ID: ${{ github.event.inputs.app_id }}
+        run: |
+          set -e
+          if [ ! -f "$GAME_FILE" ]; then echo "❌ 找不到游戏文件: $GAME_FILE"; exit 1; fi
+          rm -rf www && mkdir -p www
+          cp "$GAME_FILE" www/index.html
+          node -e "require('fs').writeFileSync('capacitor.config.json', JSON.stringify({appId:process.env.APP_ID, appName:process.env.APP_NAME, webDir:'www', android:{allowMixedContent:true}}, null, 2))"
+          echo '--- capacitor.config.json ---'
+          cat capacitor.config.json
+
       - name: 安装依赖
         run: npm install
 
@@ -47,12 +68,12 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: 重命名 APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk yuyu-520.apk
+      - name: 准备成品
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk game.apk
 
       - name: 上传 APK 成品
         uses: actions/upload-artifact@v4
         with:
-          name: yuyu-520-apk
-          path: yuyu-520.apk
+          name: apk
+          path: game.apk
           retention-days: 30

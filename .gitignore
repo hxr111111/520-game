@@ -2,6 +2,13 @@
 .DS_Store
 Thumbs.db
 
-# Editor
+# Editor / 工具
 .vscode/
+.idea/
+.claude/
 *.swp
+
+# 临时
+*.log
+*.tmp
+node_modules/

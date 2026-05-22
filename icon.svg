@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 背景圆角矩形（iOS 桌面图标风格） -->
+  <rect width="512" height="512" rx="115" ry="115" fill="#fdf6ec"/>
+  <!-- 渐变定义 -->
+  <defs>
+    <radialGradient id="hg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#e8a598"/>
+      <stop offset="100%" stop-color="#c97b6e"/>
+    </radialGradient>
+    <filter id="sh">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#c97b6e" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- 心形（与游戏中 heartPath 完全对应，scale=155，center=(256,230)） -->
+  <g filter="url(#sh)">
+    <path d="
+      M256,183.5
+      C333.5, 90  480,160  480,275
+      C480,365  360,435  256,505
+      C152,435   32,365   32,275
+      C32,160  178.5, 90  256,183.5Z
+    " fill="url(#hg)"/>
+  </g>
+  <!-- 520 文字 -->
+  <text x="256" y="298" font-size="100" text-anchor="middle"
+        font-family="Georgia,'STSong','宋体',serif"
+        font-weight="bold" fill="rgba(255,255,255,0.92)"
+        letter-spacing="4">520</text>
+</svg>

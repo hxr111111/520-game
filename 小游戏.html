@@ -4,6 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>520 · 给雨</title>
+
+<!-- ── PWA ── -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#fdf6ec">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS 桌面图标 & 全屏 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="给雨">
+<link rel="apple-touch-icon" href="icon.svg">
+<!-- 通用图标 -->
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+
+<!-- ── 微信 / 社交分享卡片 ── -->
+<meta name="description" content="接住 20 颗爱心，解锁一封只写给你的情书 💌">
+<meta property="og:title" content="520 · 给雨">
+<meta property="og:description" content="接住 20 颗爱心，解锁一封只写给你的情书 💌">
+<meta property="og:type" content="website">
+<meta property="og:image" content="share-cover.svg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="400">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; }
 
@@ -686,6 +707,13 @@ function restart() {
   resetGame();
   gameRunning = true;
   requestAnimationFrame(tick);
+}
+
+// ── Service Worker 注册（需要 HTTPS 或 localhost） ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
 }
 </script>
 </body>

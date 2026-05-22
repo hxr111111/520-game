@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">
+  <!-- 背景 -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdf6ec"/>
+      <stop offset="100%" stop-color="#f5e6d3"/>
+    </linearGradient>
+    <radialGradient id="hg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#e8a598"/>
+      <stop offset="100%" stop-color="#c97b6e"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#bg)"/>
+
+  <!-- 装饰小心形 -->
+  <g opacity="0.12" fill="#c97b6e">
+    <path d="M50,60 C62,42 85,52 85,68 C85,82 65,96 50,108 C35,96 15,82 15,68 C15,52 38,42 50,60Z"/>
+    <path d="M560,120 C572,102 595,112 595,128 C595,142 575,156 560,168 C545,156 525,142 525,128 C525,112 548,102 560,120Z"/>
+    <path d="M80,340 C88,328 104,334 104,344 C104,354 90,362 80,370 C70,362 56,354 56,344 C56,334 72,328 80,340Z"/>
+    <path d="M520,310 C530,296 550,304 550,316 C550,328 534,338 520,348 C506,338 490,328 490,316 C490,304 510,296 520,310Z"/>
+  </g>
+
+  <!-- 主心形 -->
+  <path d="M300,108 C368,30 490,80 490,178 C490,260 380,326 300,378 C220,326 110,260 110,178 C110,80 232,30 300,108Z"
+        fill="url(#hg)" opacity="0.9"/>
+
+  <!-- 520 -->
+  <text x="300" y="225" font-size="82" text-anchor="middle"
+        font-family="Georgia,'STSong',serif" font-weight="bold"
+        fill="rgba(255,255,255,0.95)" letter-spacing="6">520</text>
+
+  <!-- 副标题 -->
+  <text x="300" y="348" font-size="18" text-anchor="middle"
+        font-family="'PingFang SC','微软雅黑',sans-serif"
+        fill="#c97b6e" letter-spacing="4" opacity="0.8">接住爱心 · 解锁情书</text>
+</svg>

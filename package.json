@@ -1,0 +1,13 @@
+{
+  "name": "yuyu-520",
+  "version": "1.0.0",
+  "description": "520 给雨 - 接住爱心解锁情书",
+  "private": true,
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

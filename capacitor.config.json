@@ -1,0 +1,8 @@
+{
+  "appId": "com.hxr.yuyu520",
+  "appName": "给雨",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  }
+}

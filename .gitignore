@@ -12,3 +12,9 @@ Thumbs.db
 *.log
 *.tmp
 node_modules/
+
+# Capacitor / Android 构建产物（由云端自动生成）
+android/
+.gradle/
+*.apk
+package-lock.json

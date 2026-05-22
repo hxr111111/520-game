@@ -49,10 +49,12 @@ Write-Host "包名     : $id"
 Write-Host ""
 
 # --- 1) 提交并推送（生成链接）---
+# 注意：git 把正常进度写到 stderr，PowerShell 5.1 下不要用 2>&1，改用退出码判断
 Write-Host "[1/4] 提交并推送到 GitHub ..." -ForegroundColor Cyan
 git add -A
-git commit -m "share game: $game" 2>$null | Out-Null
-git push 2>&1 | Out-Null
+git commit -m "share game"   # 无改动时返回非0，属正常，忽略
+git push
+if ($LASTEXITCODE -ne 0) { Write-Host "[X] git push 失败，请检查网络或仓库权限" -ForegroundColor Red; exit 1 }
 
 $link = "https://$owner.github.io/$repo/" + [uri]::EscapeDataString($game)
 
